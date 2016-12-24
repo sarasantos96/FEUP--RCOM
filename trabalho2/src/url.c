@@ -45,7 +45,7 @@ void getUrlInfo(char * completeUrl, urlData * url){
     
     url->urlPath = malloc(sizeof(char) * urlPathLength);
 
-    char hostTemp[100];
+    char hostTemp[256];
 
     if(mode == NULL){
         url->user = malloc(sizeof(char) * strlen("anonymous"));

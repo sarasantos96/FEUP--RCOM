@@ -29,7 +29,7 @@ int main(int argc, char * argv[]){
         printf("Error getting control\n");
         exit(1);
     }
-
+    
     if(startReceiverCon(urlReceiver, &ftpReceiver) != 0){
         printf("Error starting receiving connection\n");
         exit(1);

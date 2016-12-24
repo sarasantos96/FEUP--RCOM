@@ -18,7 +18,7 @@ int startConnection(urlData * url, FTP * ftp){
 	/*connect to the server*/
     if(connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
         perror("connect()");
-		    return -1;
+		return -1;
 	}
 
     ftp->fdSocket = sockfd;
@@ -27,6 +27,9 @@ int startConnection(urlData * url, FTP * ftp){
 }
 
 int getControl(FTP * ftp, urlData * url, FTP * receiverFtp){
+    char buffer[1000];
+    read(ftp->fdSocket, buffer, 1000);
+
     if(sendAndReceiveControl(USER, ftp, receiverFtp, url) != 0)
         return -1;
 
@@ -40,7 +43,7 @@ int getControl(FTP * ftp, urlData * url, FTP * receiverFtp){
 }
 
 int sendAndReceiveControl(int cmd, FTP * ftp, FTP * ftpReceiver, urlData * url){
-    char command[100];
+    char command[256];
 
     switch(cmd){
         case USER:
@@ -58,6 +61,7 @@ int sendAndReceiveControl(int cmd, FTP * ftp, FTP * ftpReceiver, urlData * url){
             break;
     }
 
+    
     strcat(command, "\n");
     if(write(ftp->fdSocket, command, strlen(command)) < 0){
         printf("Error writing to socket\n");
@@ -68,13 +72,14 @@ int sendAndReceiveControl(int cmd, FTP * ftp, FTP * ftpReceiver, urlData * url){
     if(cmd == PASSIVE){
         if(receivePassiveAnswer(ftp) == 0){
             ftpReceiver->port = ftp->passiveAnswer[4] * 256 + ftp->passiveAnswer[5];
-            memset(ftpReceiver->ip, 0, 100);
+            memset(ftpReceiver->ip, 0, 256);
             sprintf(ftpReceiver->ip, "%d.%d.%d.%d", ftp->passiveAnswer[0],
                 ftp->passiveAnswer[1], ftp->passiveAnswer[2], ftp->passiveAnswer[3]);
+            
         }
     }else{
-        char answer[100] = "";
-        if(read(ftp->fdSocket, answer, 100) <= 0){
+        char answer[256] = "";
+        if(read(ftp->fdSocket, answer, 256) <= 0){
             printf("Error reading from socket\n");
             return -1;
         }
@@ -83,15 +88,15 @@ int sendAndReceiveControl(int cmd, FTP * ftp, FTP * ftpReceiver, urlData * url){
 }
 
 int receivePassiveAnswer(FTP * ftp){
-    char passiveAnswer[100];
-    if(read(ftp->fdSocket, passiveAnswer, 100) <= 0){
+    char passiveAnswer[256];
+    if(read(ftp->fdSocket, passiveAnswer, 256) <= 0){
         printf("Error reading from socket\n");
           return -1;
     }else{
         int r = sscanf(passiveAnswer, "%*[^(](%d,%d,%d,%d,%d,%d)\n", &(ftp->passiveAnswer[0]),
                 &(ftp->passiveAnswer[1]), &(ftp->passiveAnswer[2]), &(ftp->passiveAnswer[3]),
                 &(ftp->passiveAnswer[4]), &(ftp->passiveAnswer[5]));
-        if(r != 6){
+       if(r != 6){
             printf("Error reading answer\n");
               return -1;
         }
@@ -151,7 +156,9 @@ void getName(char * url, char ** filename){
 }
 
 int receiveFile(urlData * url, FTP * ftp, FTP * ftpReceiver){
-    char command[100] = "";
+        write(ftp->fdSocket, "TYPE L 8\r\n", strlen("TYPE L 8\r\n"));
+
+    char command[256] = "";
     strcpy(command, "retr ");
     strcat(command, url->urlPath);
     strcat(command, "\n");
@@ -164,10 +171,10 @@ int receiveFile(urlData * url, FTP * ftp, FTP * ftpReceiver){
     char * filename;
     FILE* file;
     int res;
-    char temp[100];
+    char temp[256];
 
     getName(url->urlPath, &filename);
-    if(!(file = fopen(filename, "w"))){
+    if(!(file = fopen(filename, "wb"))){
         printf("Error opening file\n");
         return -1;
     }

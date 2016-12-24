@@ -5,7 +5,7 @@ typedef struct {
     int fdDataSocket;
     int passiveAnswer[6];
     int port;
-    char ip[100];
+    char ip[256];
 } FTP;
 
 int startConnection(urlData * url, FTP * ftp);
